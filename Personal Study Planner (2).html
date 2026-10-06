@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Study Planner</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f3ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 9999px;
+        }
+        .timer-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+            .print-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen transition-colors duration-200">
+
+    <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 mb-6 border-b border-gray-200 dark:border-gray-800 gap-4 no-print">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/30">
+                    <i data-lucide="book-open-check" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Personal Study Planner</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Customizable Study & Break Schedule Generator</p>
+                </div>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <button id="themeToggleBtn" type="button" class="p-2.5 rounded-xl bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors" title="Toggle Theme">
+                    <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+                    <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                </button>
+                <button id="clearDataBtn" type="button" class="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 transition-colors" title="Reset/Clear Saved Data">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+                <button id="printScheduleBtn" type="button" class="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>Print</span>
+                </button>
+                <button id="exportCalendarBtn" type="button" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 transition-colors text-sm">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span>Export ICS</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- Left Form & Inputs Column (5 Cols) -->
+            <div class="lg:col-span-5 space-y-6 no-print">
+                
+                <!-- Quick Presets Block -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700/50 shadow-sm">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i> Quick Presets
+                    </h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="applyPreset(25, 5, 15, 4)" class="flex flex-col items-center p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 transition-all text-center">
+                            <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Pomodoro</span>
+                            <span class="text-[10px] text-gray-500 mt-0.5">25m / 5m</span>
+                        </button>
+                        <button type="button" onclick="applyPreset(50, 10, 20, 3)" class="flex flex-col items-center p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 transition-all text-center">
+                            <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Deep Work</span>
+                            <span class="text-[10px] text-gray-500 mt-0.5">50m / 10m</span>
+                        </button>
+                        <button type="button" onclick="applyPreset(15, 3, 10, 4)" class="flex flex-col items-center p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 transition-all text-center">
+                            <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Sprint</span>
+                            <span class="text-[10px] text-gray-500 mt-0.5">15m / 3m</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input Form -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700/50 shadow-sm space-y-5">
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-indigo-500"></i>
+                        Session Setup
+                    </h2>
+
+                    <form id="plannerForm" class="space-y-4">
+                        <!-- Subject Name & Color Tag -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Subject / Task Name</label>
+                            <div class="flex gap-2">
+                                <div class="relative flex-1">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                        <i data-lucide="book" class="w-4 h-4"></i>
+                                    </span>
+                                    <input type="text" id="subjectInput" required placeholder="e.g. Mathematics, History, Coding" 
+                                        class="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm transition-all">
+                                </div>
+                                <!-- Color Selector -->
+                                <div class="relative shrink-0">
+                                    <input type="color" id="colorInput" value="#6366f1" class="w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer p-1 bg-gray-50 dark:bg-gray-900">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Duration Inputs -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Study Block (Mins)</label>
+                                <input type="number" id="studyDurationInput" min="1" max="180" value="25" required
+                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Break Duration (Mins)</label>
+                                <input type="number" id="breakDurationInput" min="0" max="60" value="5" required
+                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Long Break Config -->
+                        <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-200/80 dark:border-gray-700/60 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label for="enableLongBreak" class="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="enableLongBreak" checked class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                    Enable Long Break
+                                </label>
+                            </div>
+                            <div id="longBreakConfig" class="grid grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <label class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">Long Break (Mins)</label>
+                                    <input type="number" id="longBreakDurationInput" min="1" max="120" value="15"
+                                        class="w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] text-gray-500 dark:text-gray-400 mb-1">Every N Sessions</label>
+                                    <input type="number" id="longBreakIntervalInput" min="2" max="10" value="4"
+                                        class="w-full px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Start Time -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Start Time</label>
+                                <button type="button" id="resetTimeBtn" class="text-[11px] text-indigo-500 hover:underline">Set to Current Time</button>
+                            </div>
+                            <input type="datetime-local" id="startTimeInput" required
+                                class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                        </div>
+
+                        <!-- Limit Type (Target Sessions OR Time Ended) -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Schedule Limit Mode</label>
+                            <div class="grid grid-cols-2 gap-2 mb-2">
+                                <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer bg-gray-50 dark:bg-gray-900 text-xs font-medium has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50/50 dark:has-[:checked]:bg-indigo-950/40">
+                                    <input type="radio" name="limitType" value="sessions" checked class="hidden" id="limitSessionsRadio">
+                                    <i data-lucide="hash" class="w-3.5 h-3.5 text-indigo-500"></i> Max Sessions
+                                </label>
+                                <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer bg-gray-50 dark:bg-gray-900 text-xs font-medium has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50/50 dark:has-[:checked]:bg-indigo-950/40">
+                                    <input type="radio" name="limitType" value="endtime" class="hidden" id="limitEndTimeRadio">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-500"></i> Time Ended
+                                </label>
+                            </div>
+
+                            <!-- Dynamic Limit Input -->
+                            <div id="sessionCountWrapper">
+                                <input type="number" id="targetSessionsInput" min="1" max="24" value="4" placeholder="Number of Sessions"
+                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                            </div>
+                            <div id="endTimeWrapper" class="hidden">
+                                <input type="datetime-local" id="targetEndTimeInput"
+                                    class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <button type="submit" class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                            Generate Schedule
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Interactive Focus Timer Widget -->
+                <div id="activeTimerCard" class="bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden hidden no-print border border-indigo-800/50">
+                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                    
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <div>
+                            <span id="currentStatusBadge" class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 mb-2">
+                                FOCUS SESSION
+                            </span>
+                            <h3 id="currentBlockTitle" class="text-xl font-bold truncate max-w-xs sm:max-w-md">Press Start to Begin</h3>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-xs text-indigo-200/70">Total Remaining</p>
+                            <p id="overallTimeRemaining" class="text-sm font-semibold text-indigo-300">0 mins remaining</p>
+                        </div>
+                    </div>
+
+                    <!-- Visual Ring Timer Display -->
+                    <div class="flex flex-col items-center justify-center py-2 relative z-10">
+                        <div class="relative flex items-center justify-center">
+                            <svg class="w-48 h-48 sm:w-56 sm:h-56">
+                                <circle class="text-slate-800" stroke-width="8" stroke="currentColor" fill="transparent" r="80" cx="50%" cy="50%" />
+                                <circle id="timerRing" class="timer-ring-circle text-indigo-500" stroke-width="8" stroke-dasharray="502.65" stroke-dashoffset="0" stroke-linecap="round" stroke="currentColor" fill="transparent" r="80" cx="50%" cy="50%" />
+                            </svg>
+                            <div class="absolute flex flex-col items-center justify-center text-center">
+                                <div id="timerDisplay" class="text-4xl sm:text-5xl font-mono font-bold tracking-tight text-white">
+                                    00:00
+                                </div>
+                                <p id="timerSubtext" class="text-xs text-indigo-200/70 mt-1">Current Interval Time</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timer Controls -->
+                    <div class="flex justify-center items-center gap-3 mt-4 relative z-10">
+                        <button id="toggleTimerBtn" type="button" class="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-xl shadow-md transition-all flex items-center gap-2">
+                            <i data-lucide="play" id="timerIcon" class="w-4 h-4"></i>
+                            <span id="timerBtnText">Start Session</span>
+                        </button>
+                        <button id="skipBlockBtn" type="button" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-gray-300 font-medium rounded-xl border border-slate-700 transition-all flex items-center gap-2">
+                            <i data-lucide="skip-forward" class="w-4 h-4"></i>
+                            Skip
+                        </button>
+                        <button id="resetBlockBtn" type="button" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded-xl border border-slate-700 transition-all" title="Reset Current Block">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Overall Plan Progress Bar -->
+                    <div class="mt-6 pt-4 border-t border-slate-800/80">
+                        <div class="flex justify-between text-xs text-gray-400 mb-1.5">
+                            <span>Plan Progress</span>
+                            <span id="overallProgressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                            <div id="overallProgressBar" class="bg-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule Summary Metrics -->
+                <div id="statsBar" class="grid grid-cols-3 gap-3 hidden">
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm text-center">
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block">Total Study Time</span>
+                        <span id="statTotalStudy" class="text-lg font-bold text-indigo-600 dark:text-indigo-400">0m</span>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm text-center">
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block">Total Break Time</span>
+                        <span id="statTotalBreak" class="text-lg font-bold text-emerald-500">0m</span>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm text-center">
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block">Estimated Finish</span>
+                        <span id="statEndTime" class="text-lg font-bold text-gray-900 dark:text-white">--:--</span>
+                    </div>
+                </div>
+
+                <!-- Timeline Schedule View -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700/50 shadow-sm print-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i data-lucide="list-checks" class="w-5 h-5 text-indigo-500"></i>
+                            Generated Timeline
+                        </h2>
+                        <span id="blockCountBadge" class="text-xs bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 px-2.5 py-1 rounded-full border border-indigo-200 dark:border-indigo-800 font-medium">
+                            0 Sessions
+                        </span>
+                    </div>
+
+                    <!-- Scrollable Schedule List -->
+                    <div id="scheduleTimeline" class="space-y-3 max-h-[520px] overflow-y-auto custom-scrollbar pr-1">
+                        <!-- Initial Empty State -->
+                        <div id="emptyState" class="text-center py-12 px-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                            <i data-lucide="calendar-clock" class="w-12 h-12 text-gray-400 mx-auto mb-3 stroke-[1.5]"></i>
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">No Schedule Created Yet</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs mx-auto">Fill in your subject, study duration, and break times on the left, then click "Generate Schedule".</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Variables ---
+        let currentSchedule = [];
+        let timerInterval = null;
+        let activeBlockIndex = 0;
+        let timeRemainingSeconds = 0;
+        let totalBlockSeconds = 0;
+        let isTimerRunning = false;
+
+        const STORAGE_KEY = 'personal_study_planner_state';
+
+        // Sound Notification Synthesizer (Web Audio API)
+        const playAudioNotification = (type = 'finish') => {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'finish') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.6);
+                } else {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                }
+            } catch (e) {
+                console.log('Audio Context error:', e);
+            }
+        };
+
+        // DOM Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            setDefaultDateTime();
+
+            // Toggle Long Break Options UI
+            document.getElementById('enableLongBreak').addEventListener('change', (e) => {
+                document.getElementById('longBreakConfig').classList.toggle('hidden', !e.target.checked);
+            });
+
+            // Toggle Limit Modes (Max Sessions vs Time Ended)
+            document.getElementById('limitSessionsRadio').addEventListener('change', toggleLimitMode);
+            document.getElementById('limitEndTimeRadio').addEventListener('change', toggleLimitMode);
+
+            // Form Submit & Controls
+            document.getElementById('plannerForm').addEventListener('submit', handleFormSubmit);
+            document.getElementById('resetTimeBtn').addEventListener('click', setDefaultDateTime);
+            document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+            document.getElementById('clearDataBtn').addEventListener('click', clearAllSavedData);
+            
+            // Timer Controls
+            document.getElementById('toggleTimerBtn').addEventListener('click', toggleTimer);
+            document.getElementById('skipBlockBtn').addEventListener('click', skipCurrentBlock);
+            document.getElementById('resetBlockBtn').addEventListener('click', resetCurrentBlock);
+
+            // Export & Print
+            document.getElementById('exportCalendarBtn').addEventListener('click', exportICS);
+            document.getElementById('printScheduleBtn').addEventListener('click', () => window.print());
+
+            // Load saved state from LocalStorage
+            loadSavedState();
+        });
+
+        function setDefaultDateTime() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const nowIso = now.toISOString().slice(0, 16);
+            document.getElementById('startTimeInput').value = nowIso;
+
+            // Default target end time to +2 hours
+            const future = new Date(now.getTime() + 120 * 60000);
+            document.getElementById('targetEndTimeInput').value = future.toISOString().slice(0, 16);
+        }
+
+        function toggleLimitMode() {
+            const isSessions = document.getElementById('limitSessionsRadio').checked;
+            document.getElementById('sessionCountWrapper').classList.toggle('hidden', !isSessions);
+            document.getElementById('endTimeWrapper').classList.toggle('hidden', isSessions);
+        }
+
+        function applyPreset(studyMins, breakMins, longBreakMins, interval) {
+            document.getElementById('studyDurationInput').value = studyMins;
+            document.getElementById('breakDurationInput').value = breakMins;
+            document.getElementById('enableLongBreak').checked = true;
+            document.getElementById('longBreakConfig').classList.remove('hidden');
+            document.getElementById('longBreakDurationInput').value = longBreakMins;
+            document.getElementById('longBreakIntervalInput').value = interval;
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // --- Schedule Generation Algorithm ---
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const subject = document.getElementById('subjectInput').value.trim();
+            const color = document.getElementById('colorInput').value;
+            const studyMins = parseInt(document.getElementById('studyDurationInput').value);
+            const breakMins = parseInt(document.getElementById('breakDurationInput').value);
+            const enableLongBreak = document.getElementById('enableLongBreak').checked;
+            const longBreakMins = enableLongBreak ? parseInt(document.getElementById('longBreakDurationInput').value) : 0;
+            const longBreakInterval = enableLongBreak ? parseInt(document.getElementById('longBreakIntervalInput').value) : 0;
+            const startTimeVal = document.getElementById('startTimeInput').value;
+
+            if (!subject || isNaN(studyMins) || studyMins <= 0 || !startTimeVal) return;
+
+            let currentTime = new Date(startTimeVal);
+            const isSessionsLimit = document.getElementById('limitSessionsRadio').checked;
+
+            currentSchedule = [];
+            let sessionCounter = 0;
+
+            if (isSessionsLimit) {
+                const targetSessions = parseInt(document.getElementById('targetSessionsInput').value) || 1;
+
+                while (sessionCounter < targetSessions) {
+                    sessionCounter++;
+
+                    // Add Study Session
+                    const studyEndTime = new Date(currentTime.getTime() + studyMins * 60000);
+                    currentSchedule.push({
+                        id: `block-${Date.now()}-${currentSchedule.length}`,
+                        type: 'study',
+                        title: `${subject} - Session ${sessionCounter}`,
+                        color: color,
+                        startTime: new Date(currentTime),
+                        endTime: studyEndTime,
+                        durationMins: studyMins,
+                        status: 'pending'
+                    });
+                    currentTime = new Date(studyEndTime);
+
+                    // Add Break Session (if not the last session)
+                    if (sessionCounter < targetSessions) {
+                        const isLong = enableLongBreak && longBreakInterval > 0 && (sessionCounter % longBreakInterval === 0);
+                        const currentBreakDuration = isLong ? longBreakMins : breakMins;
+
+                        if (currentBreakDuration > 0) {
+                            const breakEndTime = new Date(currentTime.getTime() + currentBreakDuration * 60000);
+                            currentSchedule.push({
+                                id: `break-${Date.now()}-${currentSchedule.length}`,
+                                type: 'break',
+                                title: isLong ? `Long Rest Break` : `Short Break`,
+                                color: '#10b981',
+                                startTime: new Date(currentTime),
+                                endTime: breakEndTime,
+                                durationMins: currentBreakDuration,
+                                status: 'pending'
+                            });
+                            currentTime = new Date(breakEndTime);
+                        }
+                    }
+                }
+            } else {
+                // Time Ended Limit Mode
+                const targetEndTimeVal = document.getElementById('targetEndTimeInput').value;
+                if (!targetEndTimeVal) return;
+
+                const targetEndTime = new Date(targetEndTimeVal);
+
+                while (currentTime.getTime() + studyMins * 60000 <= targetEndTime.getTime()) {
+                    sessionCounter++;
+
+                    // Add Study Session
+                    const studyEndTime = new Date(currentTime.getTime() + studyMins * 60000);
+                    currentSchedule.push({
+                        id: `block-${Date.now()}-${currentSchedule.length}`,
+                        type: 'study',
+                        title: `${subject} - Session ${sessionCounter}`,
+                        color: color,
+                        startTime: new Date(currentTime),
+                        endTime: studyEndTime,
+                        durationMins: studyMins,
+                        status: 'pending'
+                    });
+                    currentTime = new Date(studyEndTime);
+
+                    // Check if enough time left for break
+                    const isLong = enableLongBreak && longBreakInterval > 0 && (sessionCounter % longBreakInterval === 0);
+                    const currentBreakDuration = isLong ? longBreakMins : breakMins;
+
+                    if (currentTime.getTime() + currentBreakDuration * 60000 <= targetEndTime.getTime() && currentBreakDuration > 0) {
+                        const breakEndTime = new Date(currentTime.getTime() + currentBreakDuration * 60000);
+                        currentSchedule.push({
+                            id: `break-${Date.now()}-${currentSchedule.length}`,
+                            type: 'break',
+                            title: isLong ? `Long Rest Break` : `Short Break`,
+                            color: '#10b981',
+                            startTime: new Date(currentTime),
+                            endTime: breakEndTime,
+                            durationMins: currentBreakDuration,
+                            status: 'pending'
+                        });
+                        currentTime = new Date(breakEndTime);
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            activeBlockIndex = 0;
+            pauseTimer();
+
+            renderSchedule();
+            updateStats();
+            setupExecutionView();
+            saveState();
+        }
+
+        function renderSchedule() {
+            const container = document.getElementById('scheduleTimeline');
+            container.innerHTML = '';
+
+            if (currentSchedule.length === 0) return;
+
+            currentSchedule.forEach((item, index) => {
+                const isStudy = item.type === 'study';
+                const startTimeStr = formatTime(item.startTime);
+                const endTimeStr = formatTime(item.endTime);
+
+                let statusBadgeClass = 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+                if (item.status === 'completed') statusBadgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400';
+                if (item.status === 'active') statusBadgeClass = 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700';
+                if (item.status === 'skipped') statusBadgeClass = 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400';
+
+                const blockEl = document.createElement('div');
+                blockEl.className = `p-4 rounded-xl border transition-all flex items-center justify-between gap-4 ${
+                    item.status === 'active' 
+                        ? 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-500 shadow-md scale-[1.01]' 
+                        : 'bg-gray-50/50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700/60'
+                }`;
+
+                blockEl.innerHTML = `
+                    <div class="flex items-center gap-3 min-w-0">
+                        <!-- Custom Color Tag Indicator -->
+                        <div class="w-3 h-10 rounded-full shrink-0" style="background-color: ${item.color || (isStudy ? '#6366f1' : '#10b981')}"></div>
+                        
+                        <div class="truncate">
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white truncate">${item.title}</h4>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${statusBadgeClass}">
+                                    ${item.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                ${startTimeStr} - ${endTimeStr} (${item.durationMins} mins)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 no-print">
+                        <label class="cursor-pointer flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400">
+                            <input type="checkbox" ${item.status === 'completed' ? 'checked' : ''} 
+                                onchange="toggleBlockCompleted(${index}, this.checked)" 
+                                class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                            <span class="hidden sm:inline">Done</span>
+                        </label>
+                    </div>
+                `;
+
+                container.appendChild(blockEl);
+            });
+
+            lucide.createIcons();
+        }
+
+        function formatTime(dateObj) {
+            return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function updateStats() {
+            if (currentSchedule.length === 0) return;
+
+            document.getElementById('statsBar').classList.remove('hidden');
+
+            const totalStudy = currentSchedule.filter(i => i.type === 'study').reduce((acc, i) => acc + i.durationMins, 0);
+            const totalBreak = currentSchedule.filter(i => i.type === 'break').reduce((acc, i) => acc + i.durationMins, 0);
+            const lastBlock = currentSchedule[currentSchedule.length - 1];
+
+            document.getElementById('statTotalStudy').innerText = `${totalStudy}m`;
+            document.getElementById('statTotalBreak').innerText = `${totalBreak}m`;
+            document.getElementById('statEndTime').innerText = formatTime(lastBlock.endTime);
+            document.getElementById('blockCountBadge').innerText = `${currentSchedule.length} Sessions`;
+        }
+
+        function setupExecutionView() {
+            if (currentSchedule.length === 0) return;
+
+            document.getElementById('activeTimerCard').classList.remove('hidden');
+            if (activeBlockIndex >= currentSchedule.length) {
+                activeBlockIndex = currentSchedule.length - 1;
+            }
+
+            loadActiveBlock(activeBlockIndex);
+        }
+
+        function loadActiveBlock(index) {
+            if (index < 0 || index >= currentSchedule.length) return;
+
+            currentSchedule.forEach((item, i) => {
+                if (i < index && item.status !== 'skipped') item.status = 'completed';
+                else if (i === index) item.status = 'active';
+                else if (i > index && item.status !== 'skipped') item.status = 'pending';
+            });
+
+            const current = currentSchedule[index];
+            totalBlockSeconds = current.durationMins * 60;
+            timeRemainingSeconds = totalBlockSeconds;
+
+            document.getElementById('currentBlockTitle').innerText = current.title;
+            document.getElementById('currentStatusBadge').innerText = current.type === 'study' ? 'FOCUS SESSION' : 'REST BREAK';
+            document.getElementById('currentStatusBadge').className = `inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                current.type === 'study' 
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' 
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+            } mb-2`;
+
+            updateTimerDisplay();
+            updateOverallProgress();
+            renderSchedule();
+        }
+
+        // --- Timer Engine & Ring Animation ---
+        function toggleTimer() {
+            if (isTimerRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (isTimerRunning) return;
+            isTimerRunning = true;
+
+            document.getElementById('timerBtnText').innerText = 'Pause';
+            document.getElementById('timerIcon').setAttribute('data-lucide', 'pause');
+            lucide.createIcons();
+
+            timerInterval = setInterval(() => {
+                if (timeRemainingSeconds > 0) {
+                    timeRemainingSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    handleBlockCompletion();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('timerBtnText').innerText = 'Start Session';
+            document.getElementById('timerIcon').setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+        }
+
+        function handleBlockCompletion() {
+            pauseTimer();
+            playAudioNotification('finish');
+
+            if (activeBlockIndex < currentSchedule.length - 1) {
+                currentSchedule[activeBlockIndex].status = 'completed';
+                activeBlockIndex++;
+                loadActiveBlock(activeBlockIndex);
+                startTimer();
+            } else {
+                currentSchedule[activeBlockIndex].status = 'completed';
+                renderSchedule();
+                updateOverallProgress();
+            }
+            saveState();
+        }
+
+        function skipCurrentBlock() {
+            pauseTimer();
+            if (activeBlockIndex < currentSchedule.length) {
+                currentSchedule[activeBlockIndex].status = 'skipped';
+                if (activeBlockIndex < currentSchedule.length - 1) {
+                    activeBlockIndex++;
+                    loadActiveBlock(activeBlockIndex);
+                } else {
+                    renderSchedule();
+                    updateOverallProgress();
+                }
+            }
+            saveState();
+        }
+
+        function resetCurrentBlock() {
+            pauseTimer();
+            timeRemainingSeconds = totalBlockSeconds;
+            updateTimerDisplay();
+        }
+
+        function toggleBlockCompleted(index, isChecked) {
+            if (index >= 0 && index < currentSchedule.length) {
+                currentSchedule[index].status = isChecked ? 'completed' : 'pending';
+                renderSchedule();
+                updateOverallProgress();
+                saveState();
+            }
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeRemainingSeconds / 60);
+            const secs = timeRemainingSeconds % 60;
+            document.getElementById('timerDisplay').innerText = 
+                `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            // Update Circle Ring Offset
+            const circle = document.getElementById('timerRing');
+            const circumference = 2 * Math.PI * 80; // r=80 -> ~502.65
+            const progress = totalBlockSeconds > 0 ? (totalBlockSeconds - timeRemainingSeconds) / totalBlockSeconds : 0;
+            const offset = circumference - (progress * circumference);
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function updateOverallProgress() {
+            if (currentSchedule.length === 0) return;
+
+            const completedCount = currentSchedule.filter(i => i.status === 'completed').length;
+            const percentage = Math.round((completedCount / currentSchedule.length) * 100);
+
+            document.getElementById('overallProgressBar').style.width = `${percentage}%`;
+            document.getElementById('overallProgressPercent').innerText = `${percentage}%`;
+
+            const remainingBlocks = currentSchedule.filter(i => i.status === 'pending' || i.status === 'active');
+            const remainingMins = remainingBlocks.reduce((acc, i) => acc + i.durationMins, 0);
+            document.getElementById('overallTimeRemaining').innerText = `${remainingMins} mins remaining`;
+        }
+
+        function saveState() {
+            try {
+                const state = {
+                    currentSchedule: currentSchedule.map(item => ({
+                        ...item,
+                        startTime: item.startTime.toISOString(),
+                        endTime: item.endTime.toISOString()
+                    })),
+                    activeBlockIndex
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.error('Failed to save state to localStorage:', e);
+            }
+        }
+
+        function loadSavedState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+
+                const parsed = JSON.parse(raw);
+                if (parsed.currentSchedule && parsed.currentSchedule.length > 0) {
+                    currentSchedule = parsed.currentSchedule.map(item => ({
+                        ...item,
+                        startTime: new Date(item.startTime),
+                        endTime: new Date(item.endTime)
+                    }));
+                    activeBlockIndex = parsed.activeBlockIndex || 0;
+
+                    renderSchedule();
+                    updateStats();
+                    setupExecutionView();
+                }
+            } catch (e) {
+                console.error('Failed to restore state:', e);
+            }
+        }
+
+        function clearAllSavedData() {
+            if (confirm('Are you sure you want to clear your current study schedule?')) {
+                localStorage.removeItem(STORAGE_KEY);
+                currentSchedule = [];
+                activeBlockIndex = 0;
+                pauseTimer();
+                document.getElementById('scheduleTimeline').innerHTML = `
+                    <div id="emptyState" class="text-center py-12 px-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                        <i data-lucide="calendar-clock" class="w-12 h-12 text-gray-400 mx-auto mb-3 stroke-[1.5]"></i>
+                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">No Schedule Created Yet</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs mx-auto">Fill in your details and click "Generate Schedule".</p>
+                    </div>
+                `;
+                document.getElementById('statsBar').classList.add('hidden');
+                document.getElementById('activeTimerCard').classList.add('hidden');
+                lucide.createIcons();
+            }
+        }
+
+        // Export iCalendar (.ics) File
+        function exportICS() {
+            if (currentSchedule.length === 0) return;
+
+            let icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//Personal Study Planner//EN',
+                'CALSCALE:GREGORIAN'
+            ];
+
+            const formatDateForICS = (date) => {
+                return date.toISOString().replace(/-|:|\.\d\d\d/g, '');
+            };
+
+            currentSchedule.forEach(item => {
+                icsContent.push('BEGIN:VEVENT');
+                icsContent.push(`SUMMARY:${item.title}`);
+                icsContent.push(`DTSTART:${formatDateForICS(item.startTime)}`);
+                icsContent.push(`DTEND:${formatDateForICS(item.endTime)}`);
+                icsContent.push(`DESCRIPTION:Personal Study Planner Session (${item.durationMins} mins)`);
+                icsContent.push('STATUS:CONFIRMED');
+                icsContent.push('END:VEVENT');
+            });
+
+            icsContent.push('END:VCALENDAR');
+
+            const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.setAttribute('download', 'personal_study_schedule.ics');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
